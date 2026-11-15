@@ -33,8 +33,11 @@ def create_app(test_config=None):
         if request.method == "POST":
             username = request.form.get("username", "")
             password = request.form.get("password", "")
-            query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password = '{password}'"
-            user = database.get_db().cursor().execute(query).fetchone()
+            mark = database.placeholder()
+            user = database.get_db().cursor().execute(
+                f"SELECT id, username, role FROM users WHERE username = {mark} AND password = {mark}",
+                (username, password),
+            ).fetchone()
             if user:
                 session["user_id"] = user[0]
                 session["username"] = user[1]
@@ -51,7 +54,12 @@ def create_app(test_config=None):
     def search():
         query_text = request.args.get("q", "")
         cursor = database.get_db().cursor()
-        cursor.execute(f"SELECT id, title, content FROM posts WHERE title LIKE '%{query_text}%' OR content LIKE '%{query_text}%'")
+        pattern = f"%{query_text}%"
+        mark = database.placeholder()
+        cursor.execute(
+            f"SELECT id, title, content FROM posts WHERE title LIKE {mark} OR content LIKE {mark}",
+            (pattern, pattern),
+        )
         posts = cursor.fetchall()
         return render_template("search.html", posts=posts, query=query_text)
 
@@ -91,4 +99,4 @@ def create_app(test_config=None):
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)

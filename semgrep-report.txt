@@ -1,0 +1,232 @@
+               
+               
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 26 files tracked by git with 1074 Code rules:
+                                                                                                                        
+  Language      Rules   Files          Origin      Rules                                                                
+ ─────────────────────────────        ───────────────────                                                               
+  <multilang>      60      26          Community    1074                                                                
+  html              1       6                                                                                           
+  python          243       4                                                                                           
+  yaml             35       4                                                                                           
+  js              153       1                                                                                           
+  dockerfile        6       1                                                                                           
+  bash              4       1                                                                                           
+                                                                                                                        
+                    
+                    
+┌──────────────────┐
+│ 18 Code Findings │
+└──────────────────┘
+              
+    Dockerfile
+   ❯❯❱ dockerfile.security.missing-user.missing-user
+          ❰❰ Blocking ❱❱
+          By not specifying a USER, a program in the container may run as 'root'. This is a security hazard.
+          If an attacker can control a process running as root, they may have control over the container.   
+          Ensure that the last USER in a Dockerfile is a USER other than 'root'.                            
+          Details: https://sg.run/Gbvn                                                                      
+                                                                                                            
+           ▶▶┆ Autofix ▶ USER non-root CMD ["python", "-m", "backend.app"]
+           14┆ CMD ["python", "-m", "backend.app"]
+                  
+    backend\app.py
+    ❯❱ python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute
+          ❰❰ Blocking ❱❱
+          User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and
+          therefore protected information could be leaked. Instead, use django's QuerySets, which are built   
+          with query parameterization and therefore not vulnerable to sql injection. For example, you could   
+          use `Entry.objects.filter(date=2006)`.                                                              
+          Details: https://sg.run/qx7y                                                                        
+                                                                                                              
+           34┆ username = request.form.get("username", "")
+           35┆ password = request.form.get("password", "")
+           36┆ query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password =
+               '{password}'"                                                                              
+           37┆ user = database.get_db().cursor().execute(query).fetchone()
+            ⋮┆----------------------------------------
+           35┆ password = request.form.get("password", "")
+           36┆ query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password =
+               '{password}'"                                                                              
+           37┆ user = database.get_db().cursor().execute(query).fetchone()
+   
+   ❯❯❱ python.django.security.injection.tainted-sql-string.tainted-sql-string
+          ❰❰ Blocking ❱❱
+          Detected user input used to manually construct a SQL string. This is usually bad practice because 
+          manual construction could accidentally result in a SQL injection. An attacker could use a SQL     
+          injection to steal or modify contents of the database. Instead, use a parameterized query which is
+          available by default in most database engines. Alternatively, consider using the Django object-   
+          relational mappers (ORM) instead of raw SQL queries.                                              
+          Details: https://sg.run/PbZp                                                                      
+                                                                                                            
+           36┆ query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password =
+               '{password}'"                                                                              
+   
+   ❯❯❱ python.flask.security.injection.tainted-sql-string.tainted-sql-string
+          ❰❰ Blocking ❱❱
+          Detected user input used to manually construct a SQL string. This is usually bad practice because 
+          manual construction could accidentally result in a SQL injection. An attacker could use a SQL     
+          injection to steal or modify contents of the database. Instead, use a parameterized query which is
+          available by default in most database engines. Alternatively, consider using an object-relational 
+          mapper (ORM) such as SQLAlchemy which will protect your queries.                                  
+          Details: https://sg.run/JxZj                                                                      
+                                                                                                            
+           36┆ query = f"SELECT id, username, role FROM users WHERE username = '{username}' AND password =
+               '{password}'"                                                                              
+   
+    ❯❱ python.lang.security.audit.formatted-sql-query.formatted-sql-query
+          ❰❰ Blocking ❱❱
+          Detected possible formatted SQL query. Use parameterized queries instead.
+          Details: https://sg.run/EkWw                                             
+                                                                                   
+           37┆ user = database.get_db().cursor().execute(query).fetchone()
+   
+   ❯❯❱ python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+          ❰❰ Blocking ❱❱
+          Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL
+          Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy      
+          provides TextualSQL to easily used prepared statement with named parameters. For complex SQL        
+          composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy   
+          ORM will be a better option.                                                                        
+          Details: https://sg.run/2b1L                                                                        
+                                                                                                              
+           37┆ user = database.get_db().cursor().execute(query).fetchone()
+   
+    ❯❱ python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute
+          ❰❰ Blocking ❱❱
+          User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and
+          therefore protected information could be leaked. Instead, use django's QuerySets, which are built   
+          with query parameterization and therefore not vulnerable to sql injection. For example, you could   
+          use `Entry.objects.filter(date=2006)`.                                                              
+          Details: https://sg.run/qx7y                                                                        
+                                                                                                              
+           52┆ query_text = request.args.get("q", "")
+           53┆ cursor = database.get_db().cursor()
+           54┆ cursor.execute(f"SELECT id, title, content FROM posts WHERE title LIKE '%{query_text}%' OR
+               content LIKE '%{query_text}%'")                                                           
+   
+    ❯❱ python.lang.security.audit.formatted-sql-query.formatted-sql-query
+          ❰❰ Blocking ❱❱
+          Detected possible formatted SQL query. Use parameterized queries instead.
+          Details: https://sg.run/EkWw                                             
+                                                                                   
+           54┆ cursor.execute(f"SELECT id, title, content FROM posts WHERE title LIKE '%{query_text}%' OR
+               content LIKE '%{query_text}%'")                                                           
+   
+   ❯❯❱ python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+          ❰❰ Blocking ❱❱
+          Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL
+          Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy      
+          provides TextualSQL to easily used prepared statement with named parameters. For complex SQL        
+          composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy   
+          ORM will be a better option.                                                                        
+          Details: https://sg.run/2b1L                                                                        
+                                                                                                              
+           54┆ cursor.execute(f"SELECT id, title, content FROM posts WHERE title LIKE '%{query_text}%' OR
+               content LIKE '%{query_text}%'")                                                           
+   
+   ❯❯❱ python.django.security.injection.tainted-sql-string.tainted-sql-string
+          ❰❰ Blocking ❱❱
+          Detected user input used to manually construct a SQL string. This is usually bad practice because 
+          manual construction could accidentally result in a SQL injection. An attacker could use a SQL     
+          injection to steal or modify contents of the database. Instead, use a parameterized query which is
+          available by default in most database engines. Alternatively, consider using the Django object-   
+          relational mappers (ORM) instead of raw SQL queries.                                              
+          Details: https://sg.run/PbZp                                                                      
+                                                                                                            
+           54┆ cursor.execute(f"SELECT id, title, content FROM posts WHERE title LIKE '%{query_text}%' OR
+               content LIKE '%{query_text}%'")                                                           
+   
+   ❯❯❱ python.flask.security.injection.tainted-sql-string.tainted-sql-string
+          ❰❰ Blocking ❱❱
+          Detected user input used to manually construct a SQL string. This is usually bad practice because 
+          manual construction could accidentally result in a SQL injection. An attacker could use a SQL     
+          injection to steal or modify contents of the database. Instead, use a parameterized query which is
+          available by default in most database engines. Alternatively, consider using an object-relational 
+          mapper (ORM) such as SQLAlchemy which will protect your queries.                                  
+          Details: https://sg.run/JxZj                                                                      
+                                                                                                            
+           54┆ cursor.execute(f"SELECT id, title, content FROM posts WHERE title LIKE '%{query_text}%' OR
+               content LIKE '%{query_text}%'")                                                           
+   
+   ❯❯❱ python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+          ❰❰ Blocking ❱❱
+          Avoiding SQL string concatenation: untrusted input concatenated with raw SQL query can result in SQL
+          Injection. In order to execute raw query safely, prepared statement should be used. SQLAlchemy      
+          provides TextualSQL to easily used prepared statement with named parameters. For complex SQL        
+          composition, use SQL Expression Language or Schema Definition Language. In most cases, SQLAlchemy   
+          ORM will be a better option.                                                                        
+          Details: https://sg.run/2b1L                                                                        
+                                                                                                              
+           65┆ connection.cursor().execute(
+           66┆     f"INSERT INTO comments (author, content) VALUES ({mark}, {mark})",
+           67┆     (author, content),
+           68┆ )
+            ⋮┆----------------------------------------
+           78┆ user = database.get_db().cursor().execute(
+           79┆     f"SELECT id, username, email, role, secret_note FROM users WHERE id = {mark}",
+           80┆     (user_id,),
+           81┆ ).fetchone()
+   
+    ❯❱ python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host
+          ❰❰ Blocking ❱❱
+          Running flask app with host 0.0.0.0 could expose the server publicly.
+          Details: https://sg.run/eLby                                         
+                                                                               
+           94┆ app.run(host="0.0.0.0", port=5000, debug=True)
+   
+    ❯❱ python.flask.security.audit.debug-enabled.debug-enabled
+          ❰❰ Blocking ❱❱
+          Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will   
+          leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug'
+          using system environment variables.                                                                 
+          Details: https://sg.run/dKrd                                                                        
+                                                                                                              
+           94┆ app.run(host="0.0.0.0", port=5000, debug=True)
+                                    
+    frontend\templates\comments.html
+    ❯❱ python.django.security.django-no-csrf-token.django-no-csrf-token
+          ❰❰ Blocking ❱❱
+          Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.
+          Details: https://sg.run/N0Bp                                                                   
+                                                                                                         
+            5┆ <form class="panel" method="post">
+            6┆   <label>Р�РјСЏ<input name="author" value="student" required></label>
+            7┆   <label>РљРѕРјРјРµРЅС‚Р°СЂРёР№<textarea name="content" rows="4"
+               required></textarea></label>                                    
+            8┆   <button type="submit">РћРїСѓР±Р»РёРєРѕРІР°С‚СЊ</button>
+            9┆ </form>
+                                 
+    frontend\templates\login.html
+    ❯❱ python.django.security.django-no-csrf-token.django-no-csrf-token
+          ❰❰ Blocking ❱❱
+          Manually-created forms in django templates should specify a csrf_token to prevent CSRF attacks.
+          Details: https://sg.run/N0Bp                                                                   
+                                                                                                         
+            4┆ <form class="panel" method="post">
+            5┆   <h1>Р’С…РѕРґ</h1>
+            6┆   {% if error %}<p class="error">{{ error }}</p>{% endif %}
+            7┆   <label>Р›РѕРіРёРЅ<input name="username" autocomplete="username" required></label>
+            8┆   <label>РџР°СЂРѕР»СЊ<input name="password" type="password" autocomplete="current-password"
+               required></label>                                                                          
+            9┆   <button type="submit">Р’РѕР№С‚Рё</button>
+           10┆   <p class="hint">РЈС‡РµР±РЅС‹Рµ Р·Р°РїРёСЃРё: admin / admin123, student / student123</p>
+           11┆ </form>
+                
+                
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 18 (18 blocking)
+ • Rules run: 498
+ • Targets scanned: 26
+ • Parsed lines: ~100.0%
+ • Scan skipped: 
+   ◦ Files matching .semgrepignore patterns: 1
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 498 rules on 26 files: 18 findings.
+
