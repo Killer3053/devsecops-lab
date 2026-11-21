@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from flask import Flask, g, redirect, render_template, request, session
+from flask import Flask, abort, g, redirect, render_template, request, session
 
 from . import database
 from .config import DEMO_GITHUB_TOKEN, FLASK_SECRET_KEY
@@ -22,6 +22,16 @@ def create_app(test_config=None):
     app.config["DEMO_GITHUB_TOKEN"] = DEMO_GITHUB_TOKEN
     database.init_app(app)
 
+    @app.after_request
+    def security_headers(response):
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        )
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        return response
+
     @app.get("/")
     def index():
         posts = database.get_db().cursor().execute("SELECT id, title, content FROM posts ORDER BY id").fetchall()
@@ -41,6 +51,7 @@ def create_app(test_config=None):
             if user:
                 session["user_id"] = user[0]
                 session["username"] = user[1]
+                session["role"] = user[2]
                 return redirect("/")
             error = "Неверные учётные данные"
         return render_template("login.html", error=error)
@@ -81,7 +92,11 @@ def create_app(test_config=None):
 
     @app.get("/profile")
     def profile():
-        user_id = request.args.get("id", "1")
+        if "user_id" not in session:
+            abort(401)
+        user_id = request.args.get("id", default=session["user_id"], type=int)
+        if user_id != session["user_id"] and session.get("role") != "admin":
+            abort(403)
         mark = database.placeholder()
         user = database.get_db().cursor().execute(
             f"SELECT id, username, email, role, secret_note FROM users WHERE id = {mark}",

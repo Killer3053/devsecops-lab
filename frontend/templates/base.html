@@ -12,7 +12,7 @@
   <nav>
     <a href="/search">Поиск</a>
     <a href="/comments">Комментарии</a>
-    <a href="/profile?id=2">Профиль</a>
+    <a href="/profile">Профиль</a>
     {% if session.get('username') %}
       <a href="/logout">Выход ({{ session['username'] }})</a>
     {% else %}

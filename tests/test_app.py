@@ -41,10 +41,36 @@ def test_search_treats_quote_as_text(client):
     assert "Правило лаборатории" not in response.get_data(as_text=True)
 
 
-def test_profile_is_available_without_authentication(client):
-    response = client.get("/profile?id=1")
+def login(client, username, password):
+    return client.post("/login", data={"username": username, "password": password})
+
+
+def test_profile_requires_login(client):
+    assert client.get("/profile?id=1").status_code == 401
+
+
+def test_student_cannot_read_foreign_profile(client):
+    login(client, "student", "student123")
+    assert client.get("/profile?id=1").status_code == 403
+
+
+def test_student_reads_own_profile(client):
+    login(client, "student", "student123")
+    response = client.get("/profile?id=2")
     assert response.status_code == 200
-    assert "admin@example.test" in response.get_data(as_text=True)
+    assert "student@example.test" in response.get_data(as_text=True)
+
+
+def test_admin_reads_any_profile(client):
+    login(client, "admin", "admin123")
+    assert client.get("/profile?id=3").status_code == 200
+
+
+def test_security_headers_are_set(client):
+    headers = client.get("/").headers
+    assert "default-src 'self'" in headers["Content-Security-Policy"]
+    assert headers["X-Content-Type-Options"] == "nosniff"
+    assert headers["X-Frame-Options"] == "DENY"
 
 
 def test_stored_content_is_escaped(client):
