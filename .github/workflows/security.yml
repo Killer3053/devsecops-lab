@@ -10,7 +10,6 @@ permissions:
   contents: read
 
 jobs:
-
   tests:
     name: Unit tests
     runs-on: ubuntu-latest
@@ -122,6 +121,19 @@ jobs:
         run: docker compose up -d --build --wait
       - name: Smoke test
         run: curl --fail --silent http://127.0.0.1:5000/health
+
+
+
+    - name: Scan image
+      run: |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy:0.76.2 image \
+          --severity HIGH,CRITICAL \
+          --ignore-unfixed \
+          --exit-code 1 \
+          devsecops-lab-web
+
       - name: ZAP baseline scan
         run: |
           mkdir -p reports
@@ -139,3 +151,4 @@ jobs:
         with:
           name: zap-report
           path: reports/
+    
